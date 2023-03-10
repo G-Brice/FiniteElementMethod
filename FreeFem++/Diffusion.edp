@@ -1,0 +1,45 @@
+// Domain contour:
+border Gamma1(t=-1,1) { x = t; y = -1; }
+border Gamma2(t=-1,1) { x = 1; y = t; }
+border Gamma3(t=1,-1) { x = t; y = 1; }
+border Gamma4(t=1,-1) { x = -1; y = t; }
+
+// To build the mesh:
+mesh Th=buildmesh(Gamma1(60)+Gamma2(60)+Gamma3(60)+Gamma4(60));
+
+// To plot & check the mesh:
+plot(Th,wait=true);
+
+// Dirichlet BC:
+func psi=2;
+
+// Definition of the space of solutions:
+fespace Vh(Th,P1);
+
+Vh u, v, f=20*(x>-0.2)*(x<0.2)*(y>-0.2)*(y<0.2);
+Vh b = 1+1000*(x>-0.5)*(x<0.5)*(y>-0.5)*(y<0.5);
+
+// Solving the problem:
+solve Diffusion(u,v) = int2d(Th)(b*(dx(u)*dx(v) + dy(u)*dy(v))) - int2d(Th)(f*v)
+  + on(Gamma1,u=psi)
+  + on(Gamma2,u=psi)
+  + on(Gamma3,u=psi)
+  + on(Gamma4,u=psi);
+
+// Plot of level lines:
+plot(u,wait=true);
+
+// Saving the data for 3D display:
+{
+ofstream ff("graph.txt");
+for (int i = 0; i < Th.nt; i++)
+  {
+    for (int j = 0; j < 3; j++)
+      ff << Th[i][j].x << " "<< Th[i][j].y << " " << u[][Vh(i,j)] << endl;
+    ff << Th[i][0].x << " " << Th[i][0].y << " " << u[][Vh(i,0)] << "\n\n\n";
+  }
+}
+
+/* In gnuplot, type the following to get the 3D graph:
+> set palette rgbformulae 30,31,32
+> splot "graph.txt" w l pal */
